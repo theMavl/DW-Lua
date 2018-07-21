@@ -1,6 +1,7 @@
 script_name("TARDIS Spawner")
 script_author("Mavl Pond")
 script_version("1.0")
+script_version_number(1)
 script_description("The main script in TARDIS systems")
 
 require "lib.moonloader"
@@ -29,6 +30,7 @@ end
 
 
 function main()
+	printStringNow("Hello!!", 1000)
 	requestAnimation("DW")
 	requestModel(models.SPARROW)
 	requestModel(18631)
@@ -88,16 +90,36 @@ function main()
 	attachObjectToCar(TARDIS_ext[4], TARDIS, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	markModelAsNoLongerNeeded(models.SPARROW)
+	markModelAsNoLongerNeeded(18631)
+	markModelAsNoLongerNeeded(models.BRASSKNUCKLE)
+	markModelAsNoLongerNeeded(18667)
+	markModelAsNoLongerNeeded(18668)
+	markModelAsNoLongerNeeded(18669)
+	markModelAsNoLongerNeeded(18670)
+	markModelAsNoLongerNeeded(18675)
 
+	is_ready = true
 	while true do
 		wait(0)
 		if isKeyDown(57) then
-			printStringNow("Hello!!", 1000)
 			setCharCoordinates(PLAYER_PED, 1.0, 1.0, 1.0)
 		end
 	end
 end
 
 function onScriptTerminate()
+	if doesVehicleExist(TARDIS)
+	then
+		deleteCar(TARDIS)
+	end
+
+	if TARDIS_ext ~= nil then
+		for i = 0, 5 do
+			if doesObjectExist(TARDIS_ext[i]) then
+				deleteObject(TARDIS_ext[i])
+			end
+		end
+	end
+
 
 end
