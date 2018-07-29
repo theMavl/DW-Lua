@@ -1,7 +1,7 @@
 script_name("Sonic")
 script_authors("Mavl Pond", "Tommy LU")
-script_version("1.0")
-script_version_number(1)
+script_version("2.0")
+script_version_number(2)
 script_description("Sonic Screwdriver script For Doctor Who: Dalek invasion mod")
 
 require "lib.moonloader"
@@ -186,6 +186,88 @@ function activate()
     setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
   elseif sonic_app > 8 and sonic_app <= 16 then
     -- Special onfoot app
+		if sonic_app == APP_SCAN_PHOTON or sonic_app == APP_SCAN_THERMAL then
+			setPlayerWeaponsScrollable(PLAYER_HANDLE, false)
+			if device_in_hand then
+				scan_11th()
+			else
+				scan_12th()
+			end
+			if sonic_app == APP_SCAN_PHOTON then
+				setNightVision(true)
+			else
+				setInfraredVision(true)
+			end
+			wait(0)
+			if device_in_hand then
+				wait(1875)
+				ssd_removelight()
+				setCharAnimPlayingFlag(PLAYER_PED, "Sonic_nine", 0)
+				wait(0)
+			else
+				if sonic_device == 1 then
+					setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", 0)
+				else
+					wait(1750)
+					ssd_removelight()
+					setCharAnimPlayingFlag(PLAYER_PED, "Sonic_eight", 0)
+				end
+				wait(0)
+			end
+			if sonic_app == APP_SCAN_PHOTON then
+				printHelp('SONICN')
+			else
+				printHelp('SONICT')
+			end
+			wait(0)
+			setTimeScale(0.0)
+			drifted = false -- TODO: Global variable
+			if drifted then
+				-- TODO: Mark drifted TARDIS on map
+			end
+			repeat
+				wait(0)
+			until isKeyDown(vkeys.VK_X)
+
+			clearHelp()
+
+			wait(0)
+			setTimeScale(1.0)
+			if sonic_app == APP_SCAN_PHOTON then
+				setNightVision(false)
+			else
+				setInfraredVision(false)
+			end
+			wait(0)
+			if device_in_hand then
+				setCharAnimPlayingFlag(PLAYER_PED, "Sonic_nine", 1)
+				wait(1750)
+				requestAnimation("DW")
+				repeat
+					wait(10)
+				until hasAnimationLoaded("DW")
+				taskPlayAnimSecondary(PLAYER_PED, "Sonic_seven", "DW", 4.0, 0, 0, 0, 0, -1)
+				wait(650)
+				restore_sonic()
+				wait(1500)
+			else
+				if sonic_device == 1 then
+					setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", 1)
+					wait(0)
+				else
+					setCharAnimPlayingFlag(PLAYER_PED, "Sonic_eight", 1)
+					wait(850)
+					giveWeaponToChar(PLAYER_PED, weapons.FIST, 1)
+					wait(750)
+				end
+			end
+			wait(0)
+			setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
+			clearCharTasks(PLAYER_PED)
+			-- TODO: Sonic GUI enable
+			removeAnimation("DW")
+		elseif sonic_app == APP_DISARM then
+		end
   elseif sonic_app > 16 then
     -- Incar app
   end
@@ -238,96 +320,6 @@ function ssd_acc_inc()
   end
 end
 
-function ssd_scan()
-  local smode
-  if isKeyDown(vkeys.VK_1) then smode = 0
-  elseif isKeyDown(vkeys.VK_3) then smode = 1
-  else return end
-  if isCurrentCharWeapon(PLAYER_PED, weapons.POOLCUE) then
-    scan_11th()
-  elseif isCurrentCharWeapon(PLAYER_PED, weapons.FIST) then
-    scan_12th()
-  else return end
-  wait(0)
-  if smode == 0 then
-    setNightVision(true)
-  else
-    setInfraredVision(true)
-  end
-  wait(0)
-  if long_wave_mode == 1 then
-    wait(1875)
-    ssd_removelight()
-    setCharAnimPlayingFlag(PLAYER_PED, "Sonic_nine", 0)
-    wait(0)
-
-  else
-    if is_shades_on then
-      setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", 0)
-    else
-      wait(1750)
-      ssd_removelight()
-      setCharAnimPlayingFlag(PLAYER_PED, "Sonic_eight", 0)
-    end
-    wait(0)
-  end
-  -- TODO: GXT Strings!
-  if smode == 0 then
-    printHelp('SONICN')
-  else
-    printHelp('SONICT')
-  end
-  wait(0)
-  setTimeScale(0.0)
-  drifted = false -- TODO: Global variable
-  if drifted then
-    -- TODO: Mark drifted TARDIS on map
-  end
-  repeat
-    wait(0)
-  until isKeyDown(vkeys.VK_X)
-
-  clearHelp()
-
-  wait(0)
-  setTimeScale(1.0)
-  if smode == 0
-  then
-    setNightVision(false)
-  else
-    setInfraredVision(false)
-  end
-
-  wait(0)
-
-  if long_wave_mode == 1 then
-    setCharAnimPlayingFlag(PLAYER_PED, "Sonic_nine", 1)
-    wait(1750)
-    requestAnimation("DW")
-    repeat
-      wait(10)
-    until hasAnimationLoaded("DW")
-    taskPlayAnimSecondary(PLAYER_PED, "Sonic_seven", "DW", 4.0, 0, 0, 0, 0, -1)
-    wait(650)
-    restore_sonic()
-    wait(1500)
-  else
-    if is_shades_on then
-      setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", 1)
-      wait(0)
-    else
-      setCharAnimPlayingFlag(PLAYER_PED, "Sonic_eight", 1)
-      wait(850)
-      giveWeaponToChar(PLAYER_PED, weapons.FIST, 1)
-      wait(750)
-    end
-  end
-  wait(0)
-  setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
-  -- TODO: Sonic GUI enable
-  removeAnimation("DW")
-end
-
 function scan_12th()
   requestAnimation("DW")
   repeat
@@ -335,29 +327,28 @@ function scan_12th()
   until hasAnimationLoaded("DW")
   wait(100)
   -- TODO: Sonic GUI STOP
-  if not is_shades_on then
-    taskPlayAnimSecondary(PLAYER_PED, "Sonic_eight", "DW", 4.0, 0, 0, 0, 0, -1)
-    wait(950)
-    giveWeaponToChar(PLAYER_PED, weapons.POOLCUE, 1)
-    setPlayerWeaponsScrollable(PLAYER_PED, false)
-    long_wave_mode = 0
-    wait(600)
-    local sfx_loop = loadAudioStream("DWS/ssd_loop.wav")
-    setAudioStreamState(sfx_loop, as_action.PLAY)
-    ssd_setlight()
-    wait(2675)
-    setAudioStreamState(sfx_loop, as_action.STOP)
-    releaseAudioStream(sfx_loop)
-  else
-    taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, 0, 0, 0, 0, -1)
+  if sonic_device == 1 then
+		taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, 0, 0, 0, 0, -1)
     wait(300)
-    long_wave_mode = 0
     local sfx_loop = loadAudioStream("DWS/sgl_loop.mp3")
     setAudioStreamState(sfx_loop, as_action.PLAY)
     setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", 0)
     wait(2975)
     setAudioStreamState(sfx_loop, as_action.STOP)
     releaseAudioStream(sfx_loop)
+  else
+		taskPlayAnimSecondary(PLAYER_PED, "Sonic_eight", "DW", 4.0, 0, 0, 0, 0, -1)
+		wait(950)
+		giveWeaponToChar(PLAYER_PED, weapons.POOLCUE, 1)
+		setPlayerWeaponsScrollable(PLAYER_PED, false)
+		wait(600)
+		local sfx_loop = loadAudioStream("DWS/ssd_loop.wav")
+		setAudioStreamState(sfx_loop, as_action.PLAY)
+		long_wave_mode = 0 -- For ssd_setlight
+		ssd_setlight()
+		wait(2675)
+		setAudioStreamState(sfx_loop, as_action.STOP)
+		releaseAudioStream(sfx_loop)
   end
   wait(0)
 end
@@ -370,18 +361,18 @@ function scan_11th()
   wait(100)
   -- TODO: Sonic GUI STOP
   taskPlayAnimSecondary(PLAYER_PED, "Sonic_nine", "DW", 4.0, 0, 0, 0, 0, -1)
-  long_wave_mode = 0
   wait(750)
   local sfx_loop = loadAudioStream("DWS/ssd_loop.wav")
   setAudioStreamState(sfx_loop, as_action.PLAY)
+	long_wave_mode = 0 -- For ssd_setlight
   ssd_setlight()
   wait(2250)
   setAudioStreamState(sfx_loop, as_action.STOP)
   ssd_removelight()
   releaseAudioStream(sfx_loop)
   wait(550)
-  long_wave_mode = 1
   giveWeaponToChar(PLAYER_PED, weapons.SHOVEL, 1)
+	long_wave_mode = 1 -- For ssd_setlight
   ssd_setlight()
   sfx_act = loadAudioStream("DWS/ssd_act.wav")
   setAudioStreamState(sfx_act, as_action.PLAY)
