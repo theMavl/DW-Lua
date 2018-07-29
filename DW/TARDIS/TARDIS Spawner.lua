@@ -5,6 +5,9 @@ script_version_number(1)
 script_description("The main script in TARDIS systems")
 
 require "lib.moonloader"
+local as_action = require('moonloader').audiostream_state
+local mad = require 'MoonAdditions'
+
 local models = require "lib.game.models"
 local globals = require "lib.game.globals"
 
@@ -78,7 +81,7 @@ function main()
 	end
 	setObjectVisible(TARDIS_ext[2], false)
 
-	TARDIS_ext[5] = createObject(18631, 2.0, 0.0, 0.0)
+	TARDIS_ext[5] = createObject(18631, 3.0, 0.0, 2.0)
 	setObjectVisible(TARDIS_ext[5], false)
 	setObjectProofs(TARDIS_ext[5], 1, 1, 1, 1, 1)
 
@@ -91,7 +94,6 @@ function main()
 
 	markModelAsNoLongerNeeded(models.SPARROW)
 	markModelAsNoLongerNeeded(18631)
-	markModelAsNoLongerNeeded(models.BRASSKNUCKLE)
 	markModelAsNoLongerNeeded(18667)
 	markModelAsNoLongerNeeded(18668)
 	markModelAsNoLongerNeeded(18669)
@@ -105,6 +107,30 @@ function main()
 			setCharCoordinates(PLAYER_PED, 1.0, 1.0, 1.0)
 		end
 	end
+end
+
+function summonTARDIS()
+	giveWeaponToChar(PLAYER_HANDLE, 1, 1E38)
+	key = createObject(models.BRASSKNUCKLE, 0.0, 0.0, 0.0)
+	setObjectProofs(key, 1, 1, 1, 1, 1)
+	taskPickUpObject(PLAYER_HANDLE, key, 0.0, 0.0, 0.0, 6, 16, nil, nil, -1)
+	taskPlayAnim(PLAYER_HANDLE, "KEY", "DW", 4.0, 0, 0, 0, 0, -1)
+
+	tX, tY, tZ = getOffsetFromCharInWorldCoords(PLAYER_PED, 0.0, 9.8, 0.0)
+	closeAllCarDoors(TARDIS)
+	sfx_landing = load3load3dAudioStream("dws/LND1.MP3")
+	setPlay3setPlay3dAudioStreamAtCoordinates(sfx_landing, tX, tY, tZ)
+	setAudioStreamVolume(sfx_landing, 5.0)
+	wait(200)
+	setAudioStreamState(sfx_landing, as_action.PLAY)
+	wait(5750)
+	setObjectVisible(TARDIS_ext[0], false)
+	setObjectVisible(TARDIS_ext[1], false)
+	setObjectVisible(TARDIS_ext[3], false)
+	setCarCoordinates(TARDIS, tX, tY, tZ)
+	setVehicleInterior(TARDIS, globals.Active_Interior)
+	setCarVisible(TARDIS, false)
+	-- TODO: Finish summoning sequence
 end
 
 function onScriptTerminate()
