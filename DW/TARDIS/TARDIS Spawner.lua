@@ -103,9 +103,7 @@ function main()
 	is_ready = true
 	while true do
 		wait(0)
-		if isKeyDown(57) then
-			setCharCoordinates(PLAYER_PED, 1.0, 1.0, 1.0)
-		end
+
 	end
 end
 

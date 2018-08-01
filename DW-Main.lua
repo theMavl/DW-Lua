@@ -8,5 +8,5 @@ function main()
 	spawner = script.load("DW/TARDIS/TARDIS Spawner.lua")
 	sonic = script.load("DW/misc/SonicScrewdriver_v2.lua")
 
-	script.load("DW/debug/debug1.lua")
+	script.load("DW/debug/debug.lua")
 end
