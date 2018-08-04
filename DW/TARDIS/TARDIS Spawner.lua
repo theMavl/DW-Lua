@@ -36,25 +36,25 @@ function main()
 	printStringNow("Hello!!", 1000)
 	requestAnimation("DW")
 	requestModel(models.SPARROW)
-	requestModel(18631)
+	requestModel(models.TFADE)
 	requestModel(models.BRASSKNUCKLE)
-	requestModel(18667)
-	requestModel(18668)
-	requestModel(18669)
-	requestModel(18670)
-	requestModel(18675)
+	requestModel(models.NVC_TDOORL)
+	requestModel(models.NVC_TDOORR)
+	requestModel(models.NVC_TDOORS)
+	requestModel(models.NVC_TMAIN)
+	requestModel(models.TWALLPAPER)
 	loadAllModelsNow()
 
 	while true do
 		wait(0)
 		if (hasModelLoaded(models.SPARROW) and
-		hasModelLoaded(18631) and
+		hasModelLoaded(models.TFADE) and
 		hasModelLoaded(models.BRASSKNUCKLE) and
-		hasModelLoaded(18667) and
-		hasModelLoaded(18668) and
-		hasModelLoaded(18669) and
-		hasModelLoaded(18670) and
-		hasModelLoaded(18675) and
+		hasModelLoaded(models.NVC_TDOORL) and
+		hasModelLoaded(models.NVC_TDOORR) and
+		hasModelLoaded(models.NVC_TDOORS) and
+		hasModelLoaded(models.NVC_TMAIN) and
+		hasModelLoaded(models.TWALLPAPER) and
 		hasAnimationLoaded("DW")) then
 			break
 		end
@@ -75,15 +75,15 @@ function main()
 		5 - tfade
 	]]
 	for i = 0, 4 do
-		TARDIS_ext[i] = createObject(18667 + i, 2.0, 0.0, 0.0)
-		setObjectProofs(TARDIS_ext[i], 1, 1, 1, 1, 1)
+		TARDIS_ext[i] = createObject(models.NVC_TDOORL + i, 2.0, 0.0, 0.0)
+		setObjectProofs(TARDIS_ext[i], true, true, true, true, true)
 		setObjectCollision(TARDIS_ext[i], false)
 	end
 	setObjectVisible(TARDIS_ext[2], false)
 
-	TARDIS_ext[5] = createObject(18631, 3.0, 0.0, 2.0)
+	TARDIS_ext[5] = createObject(models.TFADE, 3.0, 0.0, 2.0)
 	setObjectVisible(TARDIS_ext[5], false)
-	setObjectProofs(TARDIS_ext[5], 1, 1, 1, 1, 1)
+	setObjectProofs(TARDIS_ext[5], true, true, true, true, true)
 
 	attachObjectToCar(TARDIS_ext[5], TARDIS, 0.0, 0.0, -0.030, 0.0, 0.0, 0.0)
 	attachObjectToCar(TARDIS_ext[0], TARDIS, 0.566, -0.698, 0.314, 0.0, 0.0, 0.0)
@@ -93,12 +93,12 @@ function main()
 	attachObjectToCar(TARDIS_ext[4], TARDIS, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	markModelAsNoLongerNeeded(models.SPARROW)
-	markModelAsNoLongerNeeded(18631)
-	markModelAsNoLongerNeeded(18667)
-	markModelAsNoLongerNeeded(18668)
-	markModelAsNoLongerNeeded(18669)
-	markModelAsNoLongerNeeded(18670)
-	markModelAsNoLongerNeeded(18675)
+	markModelAsNoLongerNeeded(models.TFADE)
+	markModelAsNoLongerNeeded(models.NVC_TDOORL)
+	markModelAsNoLongerNeeded(models.NVC_TDOORR)
+	markModelAsNoLongerNeeded(models.NVC_TDOORS)
+	markModelAsNoLongerNeeded(models.NVC_TMAIN)
+	markModelAsNoLongerNeeded(models.TWALLPAPER)
 
 	is_ready = true
 	while true do
@@ -108,11 +108,11 @@ function main()
 end
 
 function summonTARDIS()
-	giveWeaponToChar(PLAYER_HANDLE, 1, 1E38)
+	giveWeaponToChar(PLAYER_PED, 1, 1E38)
 	key = createObject(models.BRASSKNUCKLE, 0.0, 0.0, 0.0)
-	setObjectProofs(key, 1, 1, 1, 1, 1)
-	taskPickUpObject(PLAYER_HANDLE, key, 0.0, 0.0, 0.0, 6, 16, nil, nil, -1)
-	taskPlayAnim(PLAYER_HANDLE, "KEY", "DW", 4.0, 0, 0, 0, 0, -1)
+	setObjectProofs(key, true, true, true, true, true)
+	taskPickUpObject(PLAYER_PED, key, 0.0, 0.0, 0.0, 6, 16, nil, nil, -1)
+	taskPlayAnim(PLAYER_PED, "KEY", "DW", 4.0, 0, 0, 0, 0, -1)
 
 	tX, tY, tZ = getOffsetFromCharInWorldCoords(PLAYER_PED, 0.0, 9.8, 0.0)
 	closeAllCarDoors(TARDIS)
@@ -131,7 +131,7 @@ function summonTARDIS()
 	-- TODO: Finish summoning sequence
 end
 
-function onScriptTerminate()
+function onScriptTerminate(script, quitGame)
 	if doesVehicleExist(TARDIS)
 	then
 		deleteCar(TARDIS)
@@ -144,6 +144,4 @@ function onScriptTerminate()
 			end
 		end
 	end
-
-
 end
