@@ -337,12 +337,12 @@ function activate()
 			setAudioStreamState(sfx_dloop, as_action.PLAY)
 			ssd_setlight()
 			sonicHUD.setMode(2) -- Crosshair ON
+			wait(1300)
 			if sonic_device == 11 then
 				setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
 			end
 			--removeAnimation("DW")
 			--clearCharTasksImmediately(PLAYER_PED)
-			wait(1300)
 			local sfx_disarm = loadAudioStream("DWS/ssd_disarm.wav")
 			repeat
 				wait(0)
@@ -358,12 +358,15 @@ function activate()
 					end
 					releaseAudioStream(sfx_dloop)
 					printStringNow("Program 'Disarmament' ~r~Terminated", 3000)
-					restore_sonic()
+					ssd_removelight()
 					if is_regenerating then
+						restore_sonic()
 						giveWeaponToChar(PLAYER_PED, weapons.FIST, 1)
 					else
 						giveWeaponToChar(PLAYER_PED, c_weap, c_ammo)
+						restore_sonic()
 					end
+
 					sonicHUD.setMode(1) -- Vehicle seeker ON
 					return
 				end
@@ -411,6 +414,7 @@ function activate()
 			else
 				taskPlayAnimSecondary(PLAYER_PED, "Sonic_seven", "DW", 4.0, false, false, false, false, -1)
 				wait(650)
+				ssd_removelight()
 				restore_sonic()
 			end
 			releaseAudioStream(sfx_dloop)
