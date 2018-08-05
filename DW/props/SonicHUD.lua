@@ -1,19 +1,15 @@
 script_name("SonicHUD")
 script_authors("Mavl Pond", "Tommy LU")
-script_version("2.0")
-script_version_number(2)
-script_description("Sonic Screwdriver script For Doctor Who: Dalek invasion mod")
+script_version("1.0")
+script_version_number(1)
+script_description("Sonic Devices HUD")
 
 require "lib.moonloader"
-local as_action = require('moonloader').audiostream_state
-local mad = require 'MoonAdditions'
 local models = require "lib.game.models"
-local globals = require "lib.game.globals"
 local dwg = import('DW/sys/globals.lua')
 local shades = import('DW/props/SonicShades.lua')
 local weapons = require "lib.game.weapons"
 local keys = require "lib.game.keys"
-local vkeys = require "lib.vkeys"
 local inicfg = require 'inicfg'
 
 local mode = 0 -- 0 = off, 1 = vehicle seeeker, 2 = crosshair

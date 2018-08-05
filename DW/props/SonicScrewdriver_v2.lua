@@ -6,7 +6,7 @@ script_description("Sonic Screwdriver script For Doctor Who: Dalek invasion mod"
 
 require "lib.moonloader"
 local as_action = require('moonloader').audiostream_state
-local mad = require 'MoonAdditions'
+--local mad = require 'MoonAdditions'
 local models = require "lib.game.models"
 local globals = require "lib.game.globals"
 local dwg = import('DW/sys/globals.lua')
@@ -25,7 +25,9 @@ used_models = {
   models.GUN_DILDO2,
   models.SONICCL,
   models.SONICOL,
-	models.GOLFCLUB
+	models.GOLFCLUB,
+	models.FLOWERA,
+	models.GUN_DILDO2
 }
 local is_shades_on
 local long_wave_mode = false
@@ -63,6 +65,8 @@ local APP_INCAR_LOCK = 18
 
 local sonic_device
 local device_in_hand
+
+local sonic_spin_mode = 0 -- 0 = off, 1 = onfoot, 2 = driveby
 
 function onScriptLoad(script)
   requestAnimation("DW")
@@ -135,6 +139,7 @@ function main()
 end
 
 function activate()
+	has_purpledildo = hasCharGotWeapon(PLAYER_PED, weapons.PURPLEDILDO)
   if sonic_app <= 8 then
 		-----------------------------------
     -- Onfoot apps on target vehicle --
@@ -185,14 +190,14 @@ function activate()
 			wait(500)
 		end
     ssd_setlight()
-    wait(1100)
-    setAudioStreamState(sfx_loop, as_action.STOP)
-    ssd_removelight()
-    releaseAudioStream(sfx_loop)
+    wait(800)
     sonic_app_activate(sonic_app, target, marker)
+		wait(500)
+		setAudioStreamState(sfx_loop, as_action.STOP)
     if doesBlipExist(marker) then
       removeBlip(marker)
     end
+		ssd_removelight()
     releaseAudioStream(sfx_loop)
     if device_in_hand then
       wait(2000)
@@ -210,6 +215,7 @@ function activate()
     setPlayerControl(PLAYER_HANDLE, true)
     wait(100)
     setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
+		sonicHUD.setMode(1) -- Vehicle seeker ON
   elseif sonic_app > 8 and sonic_app <= 16 then
 		-------------------------
     -- Special onfoot apps --
@@ -432,37 +438,36 @@ function activate()
 			wait(100)
 			local weapon, ammo, modelId = removeuzi()
 			if sonic_device == 1 then
-		    local sfx_act = loadAudioStream("dws/sgl_act.mp3")
-		    setAudioStreamState(sfx_loop, as_action.PLAY)
-		    wait(700)
-		    releaseAudioStream(sfx_act)
-		  end
-			local sfx_loop
-			if sonic_device == 12 then
-				sfx_loop = loadAudioStream("dws/ssd_new.wav")
-			else
+				sfx_loop = loadAudioStream("dws/sgl_loop.mp3")
+			elseif sonic_device == 11 then
 				sfx_loop = loadAudioStream("dws/ssd_loop.wav")
+			elseif sonic_device == 12 then
+				sfx_loop = loadAudioStream("dws/ssd_new.wav")
 			end
 			setAudioStreamState(sfx_loop, as_action.PLAY)
+			if sonic_device == 1 then
+				wait(500)
+			else
+				wait(100)
+			end
 			ssd_setlight_incar()
 			wait(1250)
-			ssd_removelight_incar()
-
-		  releaseAudioStream(sfx_loop)
 			local sfx_lock = loadAudioStream("dws/ssd_lock.wav")
 			setAudioStreamState(sfx_lock, as_action.PLAY)
-			wait(100)
 			local target = storeCarCharIsInNoSave(PLAYER_PED)
 	    if getCarDoorLockStatus(target) > 1 then
 	      lockCarDoors(target, 0)
-	      printBig('UNLOCKED', 2000, 2)
+	      printBig('UNLOCK', 2000, 2)
 	    else
 	      lockCarDoors(target, 2)
-	      printBig('LOCKED', 2000, 2)
+	      printBig('LOCK', 2000, 2)
 	    end
+			wait(500)
+			ssd_removelight_incar()
+		  releaseAudioStream(sfx_loop)
 		  if sonic_device == 1 then
 		    local sfx_off = loadAudioStream("dws/sgl_off.mp3")
-		    setAudioStreamState(sfx_loop, as_action.PLAY)
+		    setAudioStreamState(sfx_off, as_action.PLAY)
 		    wait(900)
 		    releaseAudioStream(sfx_off)
 		  end
@@ -482,17 +487,16 @@ function activate()
 			if is_driving_forbidden_vehicle({models.BIKE, models.SPARROW, models.BMX, 510}) or (isCharInAnyBoat(PLAYER_PED) and not is_driving_forbidden_vehicle({models.VORTEX})) then return end
 			wait(100)
 		  local weapon, ammo, modelId = removeuzi()
-		  if sonic_device == 1 then
+			if sonic_device == 1 then
 		    local sfx_act = loadAudioStream("dws/sgl_act.mp3")
-		    setAudioStreamState(sfx_loop, as_action.PLAY)
+		    setAudioStreamState(sfx_act, as_action.PLAY)
 		    wait(700)
 		    releaseAudioStream(sfx_act)
 		  end
-			local sfx_loop
-			if sonic_device == 11 then
-      	sfx_loop = loadAudioStream("dws/ssd_loop.wav")
-			elseif sonic_device == 12 then
+			if sonic_device == 12 then
 				sfx_loop = loadAudioStream("dws/ssd_new.wav")
+			else
+				sfx_loop = loadAudioStream("dws/ssd_loop.wav")
 			end
 		  setAudioStreamState(sfx_loop, as_action.PLAY)
 		  ssd_setlight_incar()
@@ -749,7 +753,11 @@ function removeuzi()
       setCurrentCharWeapon(PLAYER_PED, weapons.FIST)
       requestModel(modelId)
       loadAllModelsNow()
-      return weapon, ammo, modelId
+			if weapon == -1 or ammo == 0 or modelId == 0 then
+				return nil, nil, nil
+			else
+      	return weapon, ammo, modelId
+			end
     end
   end
 	print("NIL")
@@ -768,7 +776,8 @@ function ssd_setlight_incar()
     setObjectProofs(obj_sonic, true, true, true, true, true)
     taskPickUpObject(PLAYER_PED, obj_sonic, 0.0, 0.0, 0.0, 6, 16, "NULL", "NULL", -1)
 	elseif sonic_device == 12 then
-		-- TODO: Enable sonic spin
+		sonic_spin_mode = 2
+		lua_thread.create(sonic_spin)
 	end
 end
 
@@ -780,7 +789,7 @@ function ssd_removelight_incar()
 	    --markObjectAsNoLongerNeeded(obj_sonic)
 	  end
 	elseif sonic_device == 12 then
-		-- TODO: Disable sonic spin
+		sonic_spin_mode = 0
 	end
 end
 
@@ -793,7 +802,8 @@ function ssd_setlight()
       giveWeaponToChar(PLAYER_PED, weapons.WHITEVIBRATOR, 1)
     end
   elseif sonic_device == 12 then
-    -- TODO: Enable sonic spin
+		sonic_spin_mode = 1
+		lua_thread.create(sonic_spin)
   end
 end
 
@@ -810,7 +820,7 @@ function ssd_removelight()
       giveWeaponToChar(PLAYER_PED, weapons.POOLCUE, 1)
     end
 	elseif sonic_device == 12 then
-		-- TODO: Disable sonic spin
+		sonic_spin_mode = 0
   end
   wait(0)
 end
@@ -884,10 +894,10 @@ function sonic_app_activate(sonic_app, target, marker)
     local doorStatus = getCarDoorLockStatus(target)
     if doorStatus > 1 then
       lockCarDoors(target, 0)
-      printBig('UNLOCKED', 2000, 2)
+      printBig('UNLOCK', 2000, 2)
     else
       lockCarDoors(target, 2)
-      printBig('LOCKED', 2000, 2)
+      printBig('LOCK', 2000, 2)
     end
     local sfx_lock = load3dAudioStream("DWS/ssd_lock.mp3")
     setPlay3dAudioStreamAtCar(sfx_lock, target)
@@ -940,4 +950,33 @@ function rotateToCharInstantly(target)
 	local y = tY - pY
 	local c = math.atan2(x, y)
 	setCharHeading(PLAYER_PED, math.deg(-c))
+end
+
+function sonic_spin()
+	if sonic_spin_mode == 1 then
+		while sonic_spin_mode == 1 do
+			giveWeaponToChar(PLAYER_PED, weapons.WHITEDILDO, 1)
+			wait(150)
+			giveWeaponToChar(PLAYER_PED, weapons.FLOWERS, 1)
+			wait(150)
+		end
+		local weapon, ammo, modelId = getCharWeaponInSlot(PLAYER_PED, 11)
+		removeWeaponFromChar(PLAYER_PED, weapon)
+		if has_purpledildo then
+			giveWeaponToChar(PLAYER_PED, weapons.PURPLEDILDO, 1)
+		end
+		giveWeaponToChar(PLAYER_PED, weapons.GOLFCLUB, 1)
+	elseif sonic_spin_mode == 2 then
+			while sonic_spin_mode == 2 do
+				local spin_a = createObject(models.FLOWERA, 0.0, 0.0, -100.0)
+				local spin_b = createObject(models.GUN_DILDO2, 0.0, 0.0, -100.0)
+				taskPickUpObject(PLAYER_PED, spin_a, 0.0, 0.0, 0.0, 6, 16, "NULL", "NULL", -1)
+				wait(150)
+				taskPickUpObject(PLAYER_PED, spin_b, 0.0, 0.0, 0.0, 6, 16, "NULL", "NULL", -1)
+				wait(150)
+				deleteObject(spin_a)
+				deleteObject(spin_b)
+			end
+
+	end
 end

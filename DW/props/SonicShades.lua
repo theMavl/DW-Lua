@@ -1,17 +1,15 @@
 script_name("SonicShades")
 script_authors("Mavl Pond", "Tommy LU")
-script_version("2.0")
-script_version_number(2)
+script_version("1.0")
+script_version_number(1)
 script_description("Sonic Shades script For Doctor Who: Dalek invasion mod")
 
 require "lib.moonloader"
 local as_action = require('moonloader').audiostream_state
-local mad = require 'MoonAdditions'
 local models = require "lib.game.models"
 local globals = require "lib.game.globals"
 local dwg = import('DW/sys/globals.lua')
 local weapons = require "lib.game.weapons"
-local keys = require "lib.game.keys"
 local vkeys = require "lib.vkeys"
 
 local obj_shades
