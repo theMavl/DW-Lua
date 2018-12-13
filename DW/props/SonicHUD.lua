@@ -11,8 +11,9 @@ local shades = import('DW/props/SonicShades.lua')
 local weapons = require "lib.game.weapons"
 local keys = require "lib.game.keys"
 local inicfg = require 'inicfg'
+local HUD_mode = require("DW/sys/labels").Sonic_HUD_mode
 
-local mode = 0 -- 0 = off, 1 = vehicle seeeker, 2 = crosshair
+local mode = HUD_mode.OFF -- 0 = off, 1 = vehicle seeeker, 2 = crosshair
 
 function EXPORTS.setMode(new_mode)
 	mode = new_mode
@@ -24,7 +25,7 @@ function main()
 	sprite_target = loadSprite("sonic_target")
 	while true do
 		wait(0)
-		if mode == 1 then
+		if mode == HUD_mode.VEHICLE_SEEKER then
 			if (shades.isShadesOn() or isCurrentCharWeapon(PLAYER_PED, weapons.GOLFCLUB) or isCurrentCharWeapon(PLAYER_PED, weapons.POOLCUE)) and not isCharInAnyCar(PLAYER_PED) then
 				if isButtonPressed(PLAYER_HANDLE, keys.player.LOCKTARGET) then
           long_wave_mode = true
@@ -43,10 +44,10 @@ function main()
 					end
 				end
 			end
-		elseif mode == 2 then
+		elseif mode == HUD_mode.CROSSHAIR then
 			setSpritesDrawBeforeFade(true)
 			useRenderCommands(true)
-			while mode == 2 do
+			while mode == HUD_mode.CROSSHAIR do
 				wait(0)
 				drawSprite(cross, 339.1, 179.1, 25.0, 25.0, 255, 255, 255, 255)
 			end

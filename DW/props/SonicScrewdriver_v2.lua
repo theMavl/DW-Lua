@@ -16,6 +16,8 @@ local weapons = require "lib.game.weapons"
 local keys = require "lib.game.keys"
 local vkeys = require "lib.vkeys"
 local inicfg = require 'inicfg'
+local HUD_mode = require("DW/sys/labels").Sonic_HUD_mode
+local S_device = require("DW/sys/labels").Sonic_device
 
 used_models = {
   models.SHOVEL,
@@ -86,7 +88,7 @@ end
 function main()
   wait(0)
   giveWeaponToChar(PLAYER_PED, weapons.GOLFCLUB, 1)
-	sonicHUD.setMode(1) -- Vehicle seeker ON
+	sonicHUD.setMode(HUD_mode.VEHICLE_SEEKER)
   while true do
     --::continue::
     wait(0)
@@ -99,7 +101,7 @@ function main()
     sonic_device, device_in_hand = get_current_sonic_device()
     sonic_app = nil
 
-    if sonic_device > 0 then
+    if sonic_device > S_device.NONE then
       if isCharInAnyCar(PLAYER_PED) then
         if isKeyDown(vkeys.VK_Z) then
           sonic_app = APP_INCAR_LOCK
@@ -119,7 +121,7 @@ function main()
           sonic_app = APP_ENG
         elseif isKeyDown(vkeys.VK_J) then
           sonic_app = APP_ONFOOT_ACC
-        elseif (device_in_hand or sonic_device == 1) and isKeyDown(vkeys.VK_Z) and long_wave_mode then
+        elseif (device_in_hand or sonic_device == S_device.SHADES) and isKeyDown(vkeys.VK_Z) and long_wave_mode then
           sonic_app = APP_DISARM
         elseif isKeyDown(vkeys.VK_2) then
           sonic_app = APP_ONFOOT_LOCK
@@ -161,13 +163,13 @@ function activate()
       else
         noflick2()
       end
-			if sonic_device == 11 then
+			if sonic_device == S_device.ELEVENTH then
       	sfx_loop = loadAudioStream("dws/ssd_loop.wav")
-			elseif sonic_device == 12 then
+			elseif sonic_device == S_device.TWELFTH then
 				sfx_loop = loadAudioStream("dws/ssd_new.wav")
 			end
     else
-      if sonic_device == 1 then
+      if sonic_device == S_device.SHADES then
         taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, false, false, false, false, -1)
         wait(250)
         sfx_loop = loadAudioStream("dws/sgl_loop.mp3")
@@ -177,16 +179,16 @@ function activate()
         else
           noflick()
         end
-				if sonic_device == 11 then
+				if sonic_device == S_device.ELEVENTH then
 	      	sfx_loop = loadAudioStream("dws/ssd_loop.wav")
-				elseif sonic_device == 12 then
+				elseif sonic_device == S_device.TWELFTH then
 					sfx_loop = loadAudioStream("dws/ssd_new.wav")
 				end
       end
     end
     setAudioStreamLooped(sfx_loop, true)
     setAudioStreamState(sfx_loop, as_action.PLAY)
-		if sonic_device == 1 then
+		if sonic_device == S_device.SHADES then
 			wait(500)
 		end
     ssd_setlight()
@@ -215,7 +217,7 @@ function activate()
     setPlayerControl(PLAYER_HANDLE, true)
     wait(100)
     setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
-		sonicHUD.setMode(1) -- Vehicle seeker ON
+		sonicHUD.setMode(HUD_mode.VEHICLE_SEEKER) -- Vehicle seeker ON
   elseif sonic_app > 8 and sonic_app <= 16 then
 		-------------------------
     -- Special onfoot apps --
@@ -226,7 +228,7 @@ function activate()
 			----------
 			setPlayerWeaponsScrollable(PLAYER_HANDLE, false)
 		  wait(100)
-		  sonicHUD.setMode(0) -- Vehicle seeker OFF
+		  sonicHUD.setMode(HUD_mode.OFF) -- Vehicle seeker OFF
 			if device_in_hand then
 				scan_11th()
 			else
@@ -244,7 +246,7 @@ function activate()
 				setCharAnimPlayingFlag(PLAYER_PED, "Sonic_nine", false)
 				wait(0)
 			else
-				if sonic_device == 1 then
+				if sonic_device == S_device.SHADES then
 					print("FR")
 					setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", false)
 				else
@@ -282,19 +284,19 @@ function activate()
 			if device_in_hand then
 				setCharAnimPlayingFlag(PLAYER_PED, "Sonic_nine", true)
 				wait(1750)
-				if sonic_device == 11 then
+				if sonic_device == S_device.ELEVENTH then
 					taskPlayAnimSecondary(PLAYER_PED, "Sonic_seven", "DW", 4.0, false, false, false, false, -1)
 					wait(650)
 					restore_sonic()
 					wait(1500)
-				elseif sonic_device == 12 then
+				elseif sonic_device == S_device.TWELFTH then
 					wait(1000)
 				end
 			else
-				if sonic_device == 1 then
+				if sonic_device == S_device.SHADES then
 					setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", true)
 					wait(0)
-				elseif sonic_device == 11 or sonic_device == 12 then
+				elseif sonic_device == S_device.ELEVENTH or sonic_device == S_device.TWELFTH then
 					setCharAnimPlayingFlag(PLAYER_PED, "Sonic_eight", true)
 					wait(850)
 					giveWeaponToChar(PLAYER_PED, weapons.FIST, 1)
@@ -304,23 +306,23 @@ function activate()
 			wait(0)
 			setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
 			--clearCharTasks(PLAYER_PED)
-			sonicHUD.setMode(1) -- Vehicle seeker ON
+			sonicHUD.setMode(HUD_mode.VEHICLE_SEEKER) -- Vehicle seeker ON
 			--removeAnimation("DW")
 		elseif sonic_app == APP_DISARM then
 			------------
 			-- Disarm --
 			------------
 			setPlayerWeaponsScrollable(PLAYER_HANDLE, false)
-			sonicHUD.setMode(0) -- Vehicle seeker OFF
+			sonicHUD.setMode(HUD_mode.OFF) -- Vehicle seeker OFF
 			local sfx_act
-			if sonic_device == 1 then
+			if sonic_device == S_device.SHADES then
 				taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, false, false, false, false, -1)
 		    wait(250)
 		    sfx_act = loadAudioStream("DWS/sgl_act.mp3")
 			else
 				taskPlayAnimSecondary(PLAYER_PED, "Sonic_six", "DW", 4.0, false, false, false, false, -1)
 				wait(620)
-				if sonic_device == 11 then
+				if sonic_device == S_device.ELEVENTH then
 					giveWeaponToChar(PLAYER_PED, weapons.SHOVEL, 1)
 				end
 				sfx_act = loadAudioStream("DWS/ssd_act.wav")
@@ -336,9 +338,9 @@ function activate()
 			setAudioStreamLooped(sfx_dloop, true)
 			setAudioStreamState(sfx_dloop, as_action.PLAY)
 			ssd_setlight()
-			sonicHUD.setMode(2) -- Crosshair ON
+			sonicHUD.setMode(HUD_mode.CROSSHAIR) -- Crosshair ON
 			wait(1300)
-			if sonic_device == 11 then
+			if sonic_device == S_device.ELEVENTH then
 				setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
 			end
 			--removeAnimation("DW")
@@ -347,7 +349,7 @@ function activate()
 			repeat
 				wait(0)
 				is_regenerating = false -- TODO: Global var
-				if (not isCurrentCharWeapon(PLAYER_PED, weapons.SILVERVIBRATOR) and sonic_device == 11) or is_regenerating then
+				if (not isCurrentCharWeapon(PLAYER_PED, weapons.SILVERVIBRATOR) and sonic_device == S_device.ELEVENTH) or is_regenerating then
 					wait(100)
 					local c_weap = getCurrentCharWeapon(PLAYER_PED)
 					local c_ammo = getAmmoInCharWeapon(PLAYER_PED, weap)
@@ -367,7 +369,7 @@ function activate()
 						restore_sonic()
 					end
 
-					sonicHUD.setMode(1) -- Vehicle seeker ON
+					sonicHUD.setMode(HUD_mode.VEHICLE_SEEKER) -- Vehicle seeker ON
 					return
 				end
 				if testCheat("LIZARD") then
@@ -406,9 +408,9 @@ function activate()
 				end
 			until isKeyDown(vkeys.VK_X)
 			releaseAudioStream(sfx_disarm)
-			sonicHUD.setMode(1) -- Vehicle seeker ON
+			sonicHUD.setMode(HUD_mode.VEHICLE_SEEKER) -- Vehicle seeker ON
 			setPlayerWeaponsScrollable(PLAYER_HANDLE, false)
-			if sonic_device == 1 then
+			if sonic_device == S_device.SHADES then
 				taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, false, false, false, false, -1)
 				wait(250)
 			else
@@ -420,7 +422,7 @@ function activate()
 			releaseAudioStream(sfx_dloop)
 			printStringNow("Program 'Disarmament' ~r~Deactivated", 3000)
 			clearHelp()
-			if sonic_device == 1 then
+			if sonic_device == S_device.SHADES then
 				local sfx_sgl_off = loadAudioStream("DWS/sgl_off.mp3")
 				setAudioStreamState(sfx_sgl_off, as_action.PLAY)
 				wait(1500)
@@ -441,15 +443,15 @@ function activate()
 			if is_driving_forbidden_vehicle({models.BIKE, models.BMX, 510}) or isCharOnAnyBike(PLAYER_PED) then return end
 			wait(100)
 			local weapon, ammo, modelId = removeuzi()
-			if sonic_device == 1 then
+			if sonic_device == S_device.SHADES then
 				sfx_loop = loadAudioStream("dws/sgl_loop.mp3")
-			elseif sonic_device == 11 then
+			elseif sonic_device == S_device.ELEVENTH then
 				sfx_loop = loadAudioStream("dws/ssd_loop.wav")
-			elseif sonic_device == 12 then
+			elseif sonic_device == S_device.TWELFTH then
 				sfx_loop = loadAudioStream("dws/ssd_new.wav")
 			end
 			setAudioStreamState(sfx_loop, as_action.PLAY)
-			if sonic_device == 1 then
+			if sonic_device == S_device.SHADES then
 				wait(500)
 			else
 				wait(100)
@@ -469,7 +471,7 @@ function activate()
 			wait(500)
 			ssd_removelight_incar()
 		  releaseAudioStream(sfx_loop)
-		  if sonic_device == 1 then
+		  if sonic_device == S_device.SHADES then
 		    local sfx_off = loadAudioStream("dws/sgl_off.mp3")
 		    setAudioStreamState(sfx_off, as_action.PLAY)
 		    wait(900)
@@ -491,13 +493,13 @@ function activate()
 			if is_driving_forbidden_vehicle({models.BIKE, models.SPARROW, models.BMX, 510}) or (isCharInAnyBoat(PLAYER_PED) and not is_driving_forbidden_vehicle({models.VORTEX})) then return end
 			wait(100)
 		  local weapon, ammo, modelId = removeuzi()
-			if sonic_device == 1 then
+			if sonic_device == S_device.SHADES then
 		    local sfx_act = loadAudioStream("dws/sgl_act.mp3")
 		    setAudioStreamState(sfx_act, as_action.PLAY)
 		    wait(700)
 		    releaseAudioStream(sfx_act)
 		  end
-			if sonic_device == 12 then
+			if sonic_device == S_device.TWELFTH then
 				sfx_loop = loadAudioStream("dws/ssd_new.wav")
 			else
 				sfx_loop = loadAudioStream("dws/ssd_loop.wav")
@@ -532,7 +534,7 @@ function activate()
 		  ssd_removelight_incar()
 		  setPlayerEnterCarButton(PLAYER_HANDLE, true)
 		  releaseAudioStream(sfx_loop)
-		  if sonic_device == 1 then
+		  if sonic_device == S_device.SHADES then
 		    local sfx_off = loadAudioStream("dws/sgl_off.mp3")
 		    setAudioStreamState(sfx_loop, as_action.PLAY)
 		    wait(900)
@@ -547,10 +549,10 @@ end
 ------------------------
 
 function load_sfx_loop()
-  if sonic_device == 11 then
+  if sonic_device == S_device.ELEVENTH then
     sfx_loop = loadAudioStream("dws/ssd_loop.wav")
     setAudioStreamLooped(sfx_loop, true)
-  elseif sonic_device == 1 then
+  elseif sonic_device == S_device.SHADES then
     sfx_loop = loadAudioStream("dws/sgl_loop.mp3")
     setAudioStreamLooped(sfx_loop, true)
     wait(500)
@@ -578,7 +580,7 @@ function is_forbidden_model(model, forbidden_models)
 end
 
 function flick()
-  sonicHUD.setMode(0) -- Vehicle seeker OFF
+  sonicHUD.setMode(HUD_mode.OFF) -- Vehicle seeker OFF
   taskPlayAnimSecondary(PLAYER_PED, "Sonic_three", "DW", 4.0, false, false, false, false, -1)
   setPlayerWeaponsScrollable(PLAYER_HANDLE, false)
   wait(550)
@@ -604,11 +606,11 @@ function noflick()
 end
 
 function flick2()
- 	sonicHUD.setMode(0) -- Vehicle seeker OFF
+ 	sonicHUD.setMode(HUD_mode.OFF) -- Vehicle seeker OFF
   taskPlayAnimSecondary(PLAYER_PED, "Sonic_five", "DW", 4.0, false, false, false, false, -1)
   setPlayerWeaponsScrollable(PLAYER_HANDLE, false)
   wait(1000)
-	if sonic_device == 11 then
+	if sonic_device == S_device.ELEVENTH then
 	  giveWeaponToChar(PLAYER_PED, weapons.SHOVEL, 1)
 	  sfx_act = loadAudioStream("DWS/ssd_act.wav")
 	  setAudioStreamState(sfx_act, as_action.PLAY)
@@ -616,7 +618,7 @@ function flick2()
 	  wait(700)
 	  ssd_removelight()
 	  releaseAudioStream(sfx_act)
-	elseif sonic_device == 12 then
+	elseif sonic_device == S_device.TWELFTH then
 		ssd_setlight()
 		wait(700)
 		ssd_removelight()
@@ -626,8 +628,8 @@ end
 
 function noflick2()
   wait(0)
-  sonicHUD.setMode(0) -- Vehicle seeker OFF
-	if sonic_device == 1 then
+  sonicHUD.setMode(HUD_mode.OFF) -- Vehicle seeker OFF
+	if sonic_device == S_device.SHADES then
 		taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, false, false, false, false, -1)
 		wait(250)
 	else
@@ -639,8 +641,8 @@ end
 
 function scan_12th()
   wait(100)
-  sonicHUD.setMode(0) -- Vehicle seeker OFF
-  if sonic_device == 1 then
+  sonicHUD.setMode(HUD_mode.OFF) -- Vehicle seeker OFF
+  if sonic_device == S_device.SHADES then
 		taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, false, false, false, false, -1)
     wait(300)
     local sfx_loop = loadAudioStream("DWS/sgl_loop.mp3")
@@ -654,9 +656,9 @@ function scan_12th()
 		wait(950)
 		restore_sonic()
 		local sfx_loop
-		if sonic_device == 11 then
+		if sonic_device == S_device.ELEVENTH then
 			sfx_loop = loadAudioStream("DWS/ssd_loop.wav")
-		elseif sonic_device == 12 then
+		elseif sonic_device == S_device.TWELFTH then
 			sfx_loop = loadAudioStream("DWS/ssd_new.wav")
 		end
 		setPlayerWeaponsScrollable(PLAYER_PED, false)
@@ -673,12 +675,12 @@ end
 
 function scan_11th()
   wait(100)
-  sonicHUD.setMode(0) -- Vehicle seeker OFF
+  sonicHUD.setMode(HUD_mode.OFF) -- Vehicle seeker OFF
 	local sfx, sonic_weap
-	if sonic_device == 11 then
+	if sonic_device == S_device.ELEVENTH then
 		sfx = "DWS/ssd_loop.wav"
 		sonic_weap = weapons.SHOVEL
-	elseif sonic_device == 12 then
+	elseif sonic_device == S_device.TWELFTH then
 		sfx = "DWS/ssd_new.wav"
 		sonic_weap = weapons.GOLFCLUB
 	end
@@ -707,14 +709,14 @@ function disarm(target)
 	local particle = createFxSystemOnChar("prt_spark", target, 0.05, 0.12, 0.01, 1)
 	rotateToCharInstantly(target)
   wait(0)
-  if sonic_device == 11 or sonic_device == 12 then
+  if sonic_device == S_device.ELEVENTH or sonic_device == S_device.TWELFTH then
     taskPlayAnimSecondary(PLAYER_PED, "Sonic_four", "DW", 4.0, false, false, false, false, -1)
 		local time = 0
 		repeat
 			wait(0)
 			time = getCharAnimCurrentTime(PLAYER_PED, "Sonic_four")
 		until time >= 0.2
-  elseif sonic_device == 1 then
+  elseif sonic_device == S_device.SHADES then
     taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, false, false, false, false, -1)
 		wait(400)
   end
@@ -738,9 +740,9 @@ function disarm(target)
 end
 
 function restore_sonic() -- old ssd_stuff
-  if sonic_device == 11 then
+  if sonic_device == S_device.ELEVENTH then
     giveWeaponToChar(PLAYER_PED, weapons.POOLCUE, 1)
-  elseif sonic_device == 12 then
+  elseif sonic_device == S_device.TWELFTH then
     giveWeaponToChar(PLAYER_PED, weapons.GOLFCLUB, 1)
   end
 end
@@ -769,7 +771,7 @@ function removeuzi()
 end
 
 function ssd_setlight_incar()
-  if sonic_device == 11 then
+  if sonic_device == S_device.ELEVENTH then
     if long_wave_mode then
       obj_sonic = createObject(models.SONICOL, 0.0, 0.0, -100.0)
     else
@@ -779,7 +781,7 @@ function ssd_setlight_incar()
     setObjectCollision(obj_sonic, false)
     setObjectProofs(obj_sonic, true, true, true, true, true)
     taskPickUpObject(PLAYER_PED, obj_sonic, 0.0, 0.0, 0.0, 6, 16, "NULL", "NULL", -1)
-	elseif sonic_device == 12 then
+	elseif sonic_device == S_device.TWELFTH then
 		sonic_spin_mode = 2
 		lua_thread.create(sonic_spin)
 	end
@@ -787,32 +789,32 @@ end
 
 function ssd_removelight_incar()
   wait(0)
-	if sonic_device == 11 then
+	if sonic_device == S_device.ELEVENTH then
 	  if doesObjectExist(obj_sonic) then
 	    deleteObject(obj_sonic)
 	    --markObjectAsNoLongerNeeded(obj_sonic)
 	  end
-	elseif sonic_device == 12 then
+	elseif sonic_device == S_device.TWELFTH then
 		sonic_spin_mode = 0
 	end
 end
 
 function ssd_setlight()
   wait(0)
-  if sonic_device == 11 then
+  if sonic_device == S_device.ELEVENTH then
     if long_wave_mode then
       giveWeaponToChar(PLAYER_PED, weapons.SILVERVIBRATOR, 1)
     else
       giveWeaponToChar(PLAYER_PED, weapons.WHITEVIBRATOR, 1)
     end
-  elseif sonic_device == 12 then
+  elseif sonic_device == S_device.TWELFTH then
 		sonic_spin_mode = 1
 		lua_thread.create(sonic_spin)
   end
 end
 
 function ssd_removelight()
-  if sonic_device == 11 then
+  if sonic_device == S_device.ELEVENTH then
     local weapon, ammo, modelId = getCharWeaponInSlot(PLAYER_PED, 11)
     removeWeaponFromChar(PLAYER_PED, weapon)
     if has_purpledildo then
@@ -823,7 +825,7 @@ function ssd_removelight()
     else
       giveWeaponToChar(PLAYER_PED, weapons.POOLCUE, 1)
     end
-	elseif sonic_device == 12 then
+	elseif sonic_device == S_device.TWELFTH then
 		sonic_spin_mode = 0
   end
   wait(0)
@@ -852,19 +854,19 @@ function get_current_sonic_device()
   in_hands = false
 	if is_shades_on == nil then is_shades_on = false end
   if is_shades_on then
-    return 1, false
+    return S_device.SHADES, false
   elseif hasCharGotWeapon(PLAYER_PED, weapons.POOLCUE) then
     if isCurrentCharWeapon(PLAYER_PED, weapons.POOLCUE) then
       in_hands = true
     end
-    return 11, in_hands
+    return S_device.ELEVENTH, in_hands
   elseif hasCharGotWeapon(PLAYER_PED, weapons.GOLFCLUB) then
     if isCurrentCharWeapon(PLAYER_PED, weapons.GOLFCLUB) then
       in_hands = true
     end
-    return 12, in_hands
+    return S_device.TWELFTH, in_hands
   else
-    return 0, false
+    return S_device.NONE, false
   end
 end
 
