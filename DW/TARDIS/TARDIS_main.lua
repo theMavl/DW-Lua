@@ -31,6 +31,27 @@ local mode = T_mode.NORMAL
 local flight_mode = T_flight_mode.IDLE
 local flight_status = T_flight_status.IDLE
 local player_status = T_player_status
+local energy = 100
+local health = 2000
+
+local ext_pos = {
+  X = 0.0,
+  Y = 0.0,
+  Z = 0.0,
+	interior = 0,
+	angle = 0.0,
+	time = os.time{year=1991, month = 1, day = 1, hour = 0, minute = 0, sec = 1}
+}
+
+local last_ext_pos = {
+  X = 0.0,
+  Y = 0.0,
+  Z = 0.0,
+	interior = 0,
+	angle = 0.0,
+	time = os.time{year=1991, month = 1, day = 1, hour = 0, minute = 0, sec = 1}
+}
+
 
 -- Handles block
 function EXPORTS.TARDIS_ext_handle()
@@ -41,11 +62,15 @@ function EXPORTS.TARDIS_ext_objs()
 	return TARDIS_ext_objs
 end
 
+function EXPORTS.TARDIS_ext_pos()
+	return ext_pos
+end
+
+-- Properties block
 function EXPORTS.is_ready()
 	return is_ready
 end
 
--- Properties block
 function EXPORTS.get_doors_action()
 	return doors_action
 end
@@ -66,19 +91,23 @@ function EXPORTS.get_player_status()
 	return player_status
 end
 
-function EXPORTS.is_cloaked()
-	return cloaked
+function EXPORTS.get_energy()
+	return energy
+end
+
+function EXPORTS.set_energy(energy_level)
+	energy = energy_level
 end
 
 -- Procedures block
 function EXPORTS.close_ext_doors(time_limit)
-	if doors_action == 0 then
+	if doors_action == T_doors_action.IDLE then
 		lua_thread.create(ext_doors_controller, 0, time_limit)
 	end
 end
 
 function EXPORTS.open_ext_doors(time_limit)
-	if doors_action == 0 then
+	if doors_action == T_doors_action.IDLE then
 		lua_thread.create(ext_doors_controller, 1, time_limit)
 	end
 end
@@ -160,55 +189,28 @@ function main()
 	markModelAsNoLongerNeeded(models.TWALLPAPER)
 
 	is_ready = true
-	-- wait(-1)
+
+	-- Load TARDIS systems
+	script.load("DW/TARDIS/TARDIS_energy.lua")
+	script.load("DW/TARDIS/TARDIS_defences.lua")
+	script.load("DW/TARDIS/TARDIS_engine.lua")
 
 	-- Load misc scripts
-	script.load("DW/TARDIS/finger_snap.lua")
-	script.load("DW/TARDIS/back_int_texture.lua")
+	script.load("DW/TARDIS/misc/finger_snap.lua")
+	script.load("DW/TARDIS/misc/back_int_texture.lua")
+	script.load("DW/TARDIS/misc/TARDIS_summoner.lua")
 
+	wait(-1)
 	while true do
 		wait(0)
-		if testCheat("TARS") then
-			printHelp('CHEAT1')
-			local X, Y, Z = getOffsetFromCharInWorldCoords(PLAYER_PED, 0.0, 2.5, offsetZ)
-			setVehicleInterior(TARDIS, getActiveInterior())
-			disableHeliAudio(TARDIS, false)
-			setCarCoordinates(TARDIS, X, Y, Z)
-			freezeCarPositionAndDontLoadCollision(TARDIS, true)
-		end
-
 	end
-end
-
-function summonTARDIS()
-	giveWeaponToChar(PLAYER_PED, 1, 1E38)
-	key = createObject(models.BRASSKNUCKLE, 0.0, 0.0, 0.0)
-	setObjectProofs(key, true, true, true, true, true)
-	taskPickUpObject(PLAYER_PED, key, 0.0, 0.0, 0.0, 6, 16, nil, nil, -1)
-	taskPlayAnim(PLAYER_PED, "KEY", "DW", 4.0, 0, 0, 0, 0, -1)
-
-	tX, tY, tZ = getOffsetFromCharInWorldCoords(PLAYER_PED, 0.0, 9.8, 0.0)
-	closeAllCarDoors(TARDIS)
-	sfx_landing = load3load3dAudioStream("dws/LND1.MP3")
-	setPlay3setPlay3dAudioStreamAtCoordinates(sfx_landing, tX, tY, tZ)
-	setAudioStreamVolume(sfx_landing, 5.0)
-	wait(200)
-	setAudioStreamState(sfx_landing, as_action.PLAY)
-	wait(5750)
-	setObjectVisible(TARDIS_ext_objs[0], false)
-	setObjectVisible(TARDIS_ext_objs[1], false)
-	setObjectVisible(TARDIS_ext_objs[3], false)
-	setCarCoordinates(TARDIS, tX, tY, tZ)
-	setVehicleInterior(TARDIS, globals.Active_Interior)
-	-- setCarVisible(TARDIS, false)
-	-- TODO: Finish summoning sequence
 end
 
 function ext_doors_controller(action, time_limit)
 	-- Action: open(1), close(0)
 	local time_limit_defined = not (time_limit == nil)
 	local doors_sfx
-	if action == 1 then
+	if action == T_doors_action.OPENING then
 		doors_sfx = load3dAudioStream("DWS/DO.mp3")
 		doors_action = 1
 		openCarDoorABit(TARDIS, 2, 0.01)

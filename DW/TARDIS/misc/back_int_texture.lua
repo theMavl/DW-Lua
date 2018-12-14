@@ -7,7 +7,7 @@ script_description("Show the interior texture on TARDIS shell if doors are opene
 require "lib.moonloader"
 local TARDIS_API = import('DW/TARDIS/TARDIS_main')
 local hide_always = false
-local texture_visible = false
+local texture_visible = true
 
 function EXPORTS.set_hide_always(status)
 	hide_always = status

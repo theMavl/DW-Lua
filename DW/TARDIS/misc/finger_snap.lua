@@ -16,7 +16,7 @@ function main()
   TARDIS = TARDIS_API.TARDIS_ext_handle()
   while true do
     wait(0)
-    if isKeyDown(vkeys.VK_G) and locateCharAnyMeansCar3d(PLAYER_PED, TARDIS, 20.0, 20.0, 20.0, false) then
+    if isKeyDown(vkeys.VK_G) and locateCharAnyMeansCar3d(PLAYER_PED, TARDIS, 20.0, 20.0, 20.0, false) and not isCharInCar(PLAYER_PED, TARDIS) then
 			requestAnimation("DW")
 			local click_sfx = loadAudioStream("DWS/FS.MP3")
 			took_weapon = false
@@ -73,7 +73,7 @@ function main()
 				setCurrentCharWeapon(PLAYER_PED, weapons.FIST)
 				markModelAsNoLongerNeeded(modelId)
 			end
-			
+
     end
   end
 end
