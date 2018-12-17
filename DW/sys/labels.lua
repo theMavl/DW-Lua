@@ -37,6 +37,12 @@ local TARDIS_player_status = {
 	EXTERIOR_VIEW = 2
 }
 
+local TARDIS_ext_fade_mode = {
+	IDLE = 0,
+	DEMATERIALISING = 1,
+	MATERIALISING = 2
+}
+
 -------------- Sonic labels --------------
 local Sonic_HUD_mode = {
 	OFF = 0,
@@ -58,6 +64,7 @@ return {
 	TARDIS_flight_mode = TARDIS_flight_mode,
 	TARDIS_flight_status = TARDIS_flight_status,
 	TARDIS_player_status = TARDIS_player_status,
+	TARDIS_ext_fade_mode = TARDIS_ext_fade_mode,
 
 	Sonic_HUD_mode = Sonic_HUD_mode,
 	Sonic_device = Sonic_device

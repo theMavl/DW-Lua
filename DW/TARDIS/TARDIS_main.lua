@@ -3,6 +3,17 @@ script_author("Mavl Pond")
 script_version("1.0")
 script_version_number(1)
 script_description("The main script in TARDIS systems")
+--[[
+	This is the script that creates all the exteior objects as well as the SPARROW
+	itself, and stores all TARDIS's variables and flags. Script also provides with
+	some of the exterior controlling procedures (closing doors for instance).
+
+	On exiting the script, it cleans up all the created entities.
+
+	Preferred usage in scripts:
+	local TARDIS_API = import('DW/TARDIS/TARDIS_main')
+
+]]
 
 require "lib.moonloader"
 local as_action = require('moonloader').audiostream_state
@@ -25,7 +36,7 @@ EXPORTS = {
 local TARDIS
 local TARDIS_ext_objs
 local is_ready
-local doors_action = T_doors_action.IDLE -- closing(-1), idle(0), opening(1)
+local doors_action = T_doors_action.IDLE
 local cloaked = false
 local mode = T_mode.NORMAL
 local flight_mode = T_flight_mode.IDLE
@@ -52,6 +63,15 @@ local last_ext_pos = {
 	time = os.time{year=1991, month = 1, day = 1, hour = 0, minute = 0, sec = 1}
 }
 
+local dest_pos = {
+  X = 0.0,
+  Y = 0.0,
+  Z = 0.0,
+	interior = 0,
+	angle = 0.0,
+	time = os.time{year=1991, month = 1, day = 1, hour = 0, minute = 0, sec = 1}
+}
+
 
 -- Handles block
 function EXPORTS.TARDIS_ext_handle()
@@ -62,11 +82,16 @@ function EXPORTS.TARDIS_ext_objs()
 	return TARDIS_ext_objs
 end
 
-function EXPORTS.TARDIS_ext_pos()
+-- Properties block
+
+function EXPORTS.get_ext_pos()
 	return ext_pos
 end
 
--- Properties block
+function EXPORTS.get_destination()
+	return dest_pos
+end
+
 function EXPORTS.is_ready()
 	return is_ready
 end
@@ -83,12 +108,32 @@ function EXPORTS.get_mode()
 	return mode
 end
 
+function EXPORTS.set_mode(new_mode)
+	mode = new_mode
+end
+
+function EXPORTS.get_flight_status()
+	return flight_status
+end
+
+function EXPORTS.set_flight_status(new_status)
+	flight_status = new_status
+end
+
 function EXPORTS.get_flight_mode()
 	return flight_mode
 end
 
+function EXPORTS.set_flight_mode(new_mode)
+	flight_mode = new_mode
+end
+
 function EXPORTS.get_player_status()
 	return player_status
+end
+
+function EXPORTS.set_player_status(new_status)
+	player_status = new_status
 end
 
 function EXPORTS.get_energy()
@@ -97,6 +142,24 @@ end
 
 function EXPORTS.set_energy(energy_level)
 	energy = energy_level
+end
+
+function EXPORTS.set_destination(X, Y, Z, interior, angle, time)
+	dest_pos.X = X
+	dest_pos.Y = Y
+	dest_pos.Z = Z
+	dest_pos.interior = interior
+	if angle ~= nil then dest_pos.angle = angle end
+	if time ~= nil then dest_pos.time = time end
+end
+
+function EXPORTS.set_ext_pos(X, Y, Z, interior, angle, time)
+	ext_pos.X = X
+	ext_pos.Y = Y
+	ext_pos.Z = Z
+	ext_pos.interior = interior
+	if angle ~= nil then ext_pos.angle = angle end
+	if time ~= nil then ext_pos.time = time end
 end
 
 -- Procedures block
@@ -194,6 +257,7 @@ function main()
 	script.load("DW/TARDIS/TARDIS_energy.lua")
 	script.load("DW/TARDIS/TARDIS_defences.lua")
 	script.load("DW/TARDIS/TARDIS_engine.lua")
+	script.load("DW/TARDIS/TARDIS_interior_ambience.lua")
 
 	-- Load misc scripts
 	script.load("DW/TARDIS/misc/finger_snap.lua")
@@ -260,6 +324,14 @@ function ext_doors_controller(action, time_limit)
 		releaseAudioStream(doors_sfx)
 	end
 	doors_action = 0
+end
+
+function onScriptTerminate(s, quitGame)
+	if s == script.this then
+		printHelpString(string.format("Script '~p~%s~w~' crashed", script.this.name))
+		print("Crash caught. Safely exiting...")
+		onExitScript()
+	end
 end
 
 function onExitScript(quitGame)

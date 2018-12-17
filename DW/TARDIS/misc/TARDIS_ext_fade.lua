@@ -2,14 +2,62 @@ script_name("TARDIS Ext Fade")
 script_author("Mavl Pond")
 script_version("1.0")
 script_version_number(1)
-script_description("TARDIS Exterior fade effects")
+script_description("TARDIS Exterior fade effects. ITC: put-to-register")
+--[[
+  This is a single-threaded script, and so it should remain. There is no reason
+	to have multiple fade scripts running at the same instance of time.
+
+	Script usage:
+	General and the most correct approach is to use the provided interface
+	(explicit functions, like demat() and mat())
+
+	Signals:
+	Sequence finishing acknowledgement can be obtained by either get_progress() function
+	or get_mode(). The first function returns two integers, the first one turns -1
+	once sequence is done. The value returned by get_mode() also turns -1 on
+	finishing the sequence.
+
+	get_progress() can also be used to perform special actions at some specific
+	stage of the sequence. These actions are to be performed in different script,
+	the caller most likely.
+]]
 
 require "lib.moonloader"
 local mad = require 'MoonAdditions'
 
 local TARDIS_API = import('DW/TARDIS/TARDIS_main')
-local labels = require("DW/sys/labels")
-local T_mode = labels.TARDIS_mode
+local T_ext_fade_mode = require("DW/sys/labels").TARDIS_ext_fade_mode
+
+local nvc_visible = true
+local current_stage = -1
+local total_stages = -1
+local fade_mode = T_ext_fade_mode.IDLE
+
+function EXPORTS.get_progress()
+  return current_stage, total_stages
+end
+
+function EXPORTS.get_mode()
+	return fade_mode
+end
+
+function EXPORTS.demat()
+	set_fade_mode(T_ext_fade_mode.DEMATERIALISING)
+end
+
+function EXPORTS.mat()
+	set_fade_mode(T_ext_fade_mode.MATERIALISING)
+end
+
+function set_fade_mode(mode)
+	print("Received new mode:", mode)
+	if fade_mode == T_ext_fade_mode.IDLE then
+		print("Set mode")
+		fade_mode = mode
+		return true
+	end
+	return false
+end
 
 local fade_sequences = {
   mat = {
@@ -55,7 +103,7 @@ local fade_sequences = {
     {70, 30, 1000},
     {30, 60, 751},
     {60, 20, 1082},
-    {20, 1, 546}
+    {20, 0, 546}
   },
 
   tshort_1 = {
@@ -149,14 +197,21 @@ local fade_sequences = {
   },
 }
 
-function EXPORTS.doo()
-  lua_thread.create(fade, fade_sequences.mat)
-end
-
 function main()
   wait(0)
   while true do
+		-- Busy waiting
     wait(0)
+		if fade_mode == T_ext_fade_mode.DEMATERIALISING then
+			fade(fade_sequences.demat)
+		end
+		if fade_mode == T_ext_fade_mode.MATERIALISING then
+			print("MAT")
+			fade(fade_sequences.mat)
+		end
+		if fade_mode ~= T_ext_fade_mode.IDLE then
+			--set_fade_mode(T_ext_fade_mode.IDLE) -- If mode wasn't accepted by any condition
+		end
   end
 end
 
@@ -164,12 +219,15 @@ function fade(sequence)
 	doorl = TARDIS_API.TARDIS_ext_objs()[0]
 	doorr = TARDIS_API.TARDIS_ext_objs()[1]
 	main = TARDIS_API.TARDIS_ext_objs()[3]
-	nvc_visible = true
 
   tfade = TARDIS_API.TARDIS_ext_objs()[5]
   TARDIS = TARDIS_API.TARDIS_ext_handle()
 
+	total_stages = table.getn(sequence)
+
   for i, s in ipairs(sequence) do
+		current_stage = i
+
     from = s[1]
     to = s[2]
     time_limit = s[3]
@@ -181,6 +239,7 @@ function fade(sequence)
 		start = os.clock() * 1000
     repeat
       time = os.clock() * 1000 - start
+			if time > time_limit then time = time_limit end
       alpha = math.floor((to - from) / time_limit * time + from)
 			if alpha > 255 then alpha = 255 end
 			if alpha < 100 then
@@ -201,4 +260,6 @@ function fade(sequence)
 			wait(0)
     until time >= time_limit
   end
+	current_stage = -1
+	fade_mode = T_ext_fade_mode.IDLE
 end
