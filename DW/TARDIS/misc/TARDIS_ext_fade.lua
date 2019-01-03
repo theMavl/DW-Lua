@@ -26,7 +26,10 @@ require "lib.moonloader"
 local mad = require 'MoonAdditions'
 
 local TARDIS_API = import('DW/TARDIS/TARDIS_main')
-local T_ext_fade_mode = require("DW/sys/labels").TARDIS_ext_fade_mode
+local labels = require("DW/sys/labels")
+local T_ext_fade_mode = labels.TARDIS_ext_fade_mode
+local T_mode = labels.TARDIS_mode
+local T_player_status = labels.TARDIS_player_status
 
 local nvc_visible = true
 local current_stage = -1
@@ -47,6 +50,12 @@ end
 
 function EXPORTS.mat()
 	set_fade_mode(T_ext_fade_mode.MATERIALISING)
+end
+
+local on_flag_for_ext_top_light = false
+
+function EXPORTS.get_ext_top_light_flag()
+	return on_flag_for_ext_top_light
 end
 
 function set_fade_mode(mode)
@@ -225,17 +234,42 @@ function fade(sequence)
 
 	total_stages = table.getn(sequence)
 
+	-- Set ext objects collision to false if materialising
+	if fade_mode == T_ext_fade_mode.MATERIALISING then
+		setObjectCollision(doorl, false)
+		setObjectCollision(doorr, false)
+	end
+
   for i, s in ipairs(sequence) do
 		current_stage = i
 
     from = s[1]
     to = s[2]
     time_limit = s[3]
+
+		if from > to then
+			if fade_mode == T_ext_fade_mode.DEMATERIALISING then
+				on_flag_for_ext_top_light = true
+			elseif fade_mode == T_ext_fade_mode.MATERIALISING then
+				on_flag_for_ext_top_light = false
+			end
+		else
+			if fade_mode == T_ext_fade_mode.DEMATERIALISING then
+				on_flag_for_ext_top_light = false
+			elseif fade_mode == T_ext_fade_mode.MATERIALISING then
+				on_flag_for_ext_top_light = true
+			end
+		end
+
+		if TARDIS_API.get_mode() == T_mode.SUMMONING then
+			-- Summoning sequence uses set_TARDIS_invisible(), which hides nvc.
+			nvc_visible = false
+		end
+
 		-- Visible range: 100-255
     from = from * 1.55 + 100
     to = to * 1.55 + 100
-    setCarVisible(TARDIS, false)
-    setObjectVisible(tfade, true)
+    TARDIS_API.set_tfade_visible()
 		start = os.clock() * 1000
     repeat
       time = os.clock() * 1000 - start
@@ -260,6 +294,17 @@ function fade(sequence)
 			wait(0)
     until time >= time_limit
   end
+	if sequence[#sequence][2] == 100 then
+		TARDIS_API.set_sparrow_visible()
+	end
+
+	-- Set ext objects collision to true if materialising and outside or in interior
+	local player_status = TARDIS_API.get_player_status()
+	if fade_mode == T_ext_fade_mode.MATERIALISING and  (player_status == T_player_status.OUTSIDE or player_status == T_player_status.IN_INTERIOR) then
+		setObjectCollision(doorl, true)
+		setObjectCollision(doorr, true)
+	end
+
 	current_stage = -1
 	fade_mode = T_ext_fade_mode.IDLE
 end

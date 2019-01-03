@@ -12,7 +12,6 @@ script_description("The main script in TARDIS systems")
 
 	Preferred usage in scripts:
 	local TARDIS_API = import('DW/TARDIS/TARDIS_main')
-
 ]]
 
 require "lib.moonloader"
@@ -22,6 +21,8 @@ local mad = require 'MoonAdditions'
 local models = require "lib.game.models"
 local globals = require "lib.game.globals"
 local labels = require("DW/sys/labels")
+
+local new_game = false
 
 local T_doors_action = labels.TARDIS_doors_action
 local T_mode = labels.TARDIS_mode
@@ -41,9 +42,10 @@ local cloaked = false
 local mode = T_mode.NORMAL
 local flight_mode = T_flight_mode.IDLE
 local flight_status = T_flight_status.IDLE
-local player_status = T_player_status
+local player_status = T_player_status.OUTSIDE
 local energy = 100
 local health = 2000
+local summon_blocked = false
 
 local ext_pos = {
   X = 0.0,
@@ -98,6 +100,18 @@ end
 
 function EXPORTS.get_doors_action()
 	return doors_action
+end
+
+function EXPORTS.is_IDLE()
+	return flight_mode == T_flight_mode.IDLE and mode == T_mode.NORMAL
+end
+
+function EXPORTS.is_summon_blocked()
+	return summon_blocked
+end
+
+function EXPORTS.set_summon_blocked(status)
+	summon_blocked = status
 end
 
 function EXPORTS.is_cloaked()
@@ -163,6 +177,43 @@ function EXPORTS.set_ext_pos(X, Y, Z, interior, angle, time)
 end
 
 -- Procedures block
+function EXPORTS.check_close_ext_doors()
+	-- return true if doors are closed, false otherwise and close them.
+	if check_doors_closed() then
+		return true
+	else
+		if doors_action ~= T_doors_action.CLOSING then
+			lua_thread.create(ext_doors_controller, 0, nil)
+			return false
+		end
+	end
+end
+
+function EXPORTS.are_doors_closed()
+	return check_doors_closed()
+end
+
+function EXPORTS.set_tfade_visible()
+	-- Special cases
+	setCarVisible(TARDIS, false)
+	setObjectVisible(TARDIS_ext_objs[5], true)
+end
+
+function EXPORTS.set_sparrow_visible()
+	-- Special cases
+	setCarVisible(TARDIS, true)
+	setObjectVisible(TARDIS_ext_objs[5], false)
+end
+
+function EXPORTS.set_TARDIS_invisible()
+	setCarVisible(TARDIS, false)
+	setObjectVisible(TARDIS_ext_objs[0], false)
+	setObjectVisible(TARDIS_ext_objs[1], false)
+	setObjectVisible(TARDIS_ext_objs[2], false)
+	setObjectVisible(TARDIS_ext_objs[3], false)
+	setObjectVisible(TARDIS_ext_objs[5], false)
+end
+
 function EXPORTS.close_ext_doors(time_limit)
 	if doors_action == T_doors_action.IDLE then
 		lua_thread.create(ext_doors_controller, 0, time_limit)
@@ -176,7 +227,7 @@ function EXPORTS.open_ext_doors(time_limit)
 end
 
 function main()
-	printStringNow("Oh brilliant!!", 1000)
+	printStringNow("Oh brilliant!!", 500)
 	requestAnimation("DW")
 	requestModel(models.SPARROW)
 	requestModel(models.TFADE)
@@ -236,7 +287,7 @@ function main()
 	setObjectProofs(TARDIS_ext_objs[5], true, true, true, true, true)
 	setObjectCollision(TARDIS_ext_objs[5], false)
 
-	attachObjectToCar(TARDIS_ext_objs[5], TARDIS, 0.0, 0.0, -0.030, 0.0, 0.0, 0.0)
+
 	attachObjectToCar(TARDIS_ext_objs[0], TARDIS, 0.566, -0.698, 0.314, 0.0, 0.0, 0.0)
 	attachObjectToCar(TARDIS_ext_objs[1], TARDIS, -0.566, -0.698, 0.314, 0.0, 0.0, 0.0)
 	attachObjectToCar(TARDIS_ext_objs[2], TARDIS, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -250,6 +301,53 @@ function main()
 	markModelAsNoLongerNeeded(models.NVC_TDOORS)
 	markModelAsNoLongerNeeded(models.NVC_TMAIN)
 	markModelAsNoLongerNeeded(models.TWALLPAPER)
+
+	if new_game then
+		repeat
+			wait(0)
+			if isPlayerPlaying(PLAYER_HANDLE) and isPlayerControllable(PLAYER_HANDLE) and locateCharAnyMeans3d(PLAYER_PED,  2239.3425, -1261.9398, 23.9375, 1.0, 1.0, 1.0, false) then
+				while getFadingStatus() do
+					wait(0)
+				end
+				wait(5000)
+				break
+			end
+		until false
+	end
+
+	loadTextureDictionary('DWLOAD')
+	local load_screen_sprite = loadSprite('loadsc1')
+	displayHud(false)
+	displayRadar(false)
+	--setSpritesDrawBeforeFade(true)
+	setObjectVisible(TARDIS_ext_objs[5], true)
+	--useRenderCommands(false)
+	--drawSprite(load_screen_sprite, 320.0, 220.0, 640.0, 480.0, 255, 255, 255, 255)
+	setPlayerControl(PLAYER_HANDLE, false)
+	freezeCharPosition(PLAYER_PED, true)
+	local X, Y, Z = getOffsetFromCharInWorldCoords(PLAYER_PED, 0.0, 0.0, 0.0)
+	setObjectCoordinates(TARDIS_ext_objs[5], X, Y, Z)
+
+	wait(1500)
+	while getFadingStatus() do
+		wait(0)
+	end
+	local start = os.clock()*1000
+	repeat
+		wait(0)
+		--drawSprite(load_screen_sprite, 320.0, 220.0, 640.0, 480.0, 255, 255, 255, 255)
+		printStringNow("Loading...", 1)
+		local time = os.clock()*1000 - start
+	until time > 1000
+
+	attachObjectToCar(TARDIS_ext_objs[5], TARDIS, 0.0, 0.0, -0.030, 0.0, 0.0, 0.0)
+	setObjectVisible(TARDIS_ext_objs[5], false)
+	setPlayerControl(PLAYER_HANDLE, true)
+	freezeCharPosition(PLAYER_PED, false)
+	useRenderCommands(false)
+	removeTextureDictionary()
+	displayRadar(true)
+	displayHud(true)
 
 	is_ready = true
 
@@ -326,25 +424,33 @@ function ext_doors_controller(action, time_limit)
 	doors_action = 0
 end
 
-function onScriptTerminate(s, quitGame)
-	if s == script.this then
-		printHelpString(string.format("Script '~p~%s~w~' crashed", script.this.name))
-		print("Crash caught. Safely exiting...")
-		onExitScript()
+function check_doors_closed()
+	local angle_left = math.abs(getDoorAngleRatio(TARDIS, 3))
+	local angle_right = math.abs(getDoorAngleRatio(TARDIS, 2))
+	if angle_left == 0.0 and angle_right == 0.0 then
+		return true
+	else
+		return false
 	end
 end
 
-function onExitScript(quitGame)
-	if doesVehicleExist(TARDIS)
-	then
-		deleteCar(TARDIS)
-	end
+function onScriptTerminate(s, quitGame)
+	if s == script.this then
+		if doesVehicleExist(TARDIS)
+		then
+			deleteCar(TARDIS)
+		end
 
-	if TARDIS_ext_objs ~= nil then
-		for i = 0, 5 do
-			if doesObjectExist(TARDIS_ext_objs[i]) then
-				deleteObject(TARDIS_ext_objs[i])
+		if TARDIS_ext_objs ~= nil then
+			for i = 0, 5 do
+				if doesObjectExist(TARDIS_ext_objs[i]) then
+					deleteObject(TARDIS_ext_objs[i])
+				end
 			end
 		end
 	end
+end
+
+function onStartNewGame(missionPackNumber)
+	new_game = true
 end

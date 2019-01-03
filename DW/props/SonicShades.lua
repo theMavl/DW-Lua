@@ -23,6 +23,10 @@ function EXPORTS.takeOff()
 	off()
 end
 
+function EXPORTS.activate(long)
+	lua_thread.create(do_action, long)
+end
+
 function EXPORTS.isShadesOn()
 	if status == 1 then return true else return false end
 end
@@ -83,8 +87,28 @@ function on()
 	end
 end
 
-function onScriptTerminate(script, quitGame)
-	if doesObjectExist(obj_shades) then
-		deleteObject(obj_shades)
+function do_action(long)
+	taskPlayAnimNonInterruptable(PLAYER_PED, "Wearable_Tech", "DW", 4.0, false, false, false, false, -1)
+	wait(250)
+	local sfx_loop = loadAudioStream("dws/sgl_loop.mp3")
+	setAudioStreamState(sfx_loop, as_action.PLAY)
+	if long then
+		wait(500)
+		setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", false)
+		wait(2000)
+		setCharAnimPlayingFlag(PLAYER_PED, "Wearable_Tech", true)
+		wait(1000)
+	else
+		wait(500)
+	end
+	releaseAudioStream(sfx_loop)
+end
+
+function onScriptTerminate(s, quitGame)
+	if s == script.this then
+		setPlayerWeaponsScrollable(PLAYER_HANDLE, true)
+		if doesObjectExist(obj_shades) then
+			deleteObject(obj_shades)
+		end
 	end
 end

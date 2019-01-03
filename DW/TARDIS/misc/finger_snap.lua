@@ -55,10 +55,7 @@ function main()
 			setAudioStreamState(click_sfx, as_action.PLAY)
 			wait(250)
 
-      local angle_left = math.abs(getDoorAngleRatio(TARDIS, 3))
-      local angle_right = math.abs(getDoorAngleRatio(TARDIS, 2))
-
-			if angle_left == 0.0 or angle_right == 0.0 then
+			if TARDIS_API.are_doors_closed() then
 				TARDIS_API.open_ext_doors()
 			else
 				TARDIS_API.close_ext_doors()

@@ -260,16 +260,10 @@ end
 
 function onScriptTerminate(s, quitGame)
 	if s == script.this then
-		printHelpString(string.format("Script '~p~%s~w~' crashed", script.this.name))
-		print("Crash caught. Safely exiting...")
-		onExitScript()
-	end
-end
-
-function onExitScript(quitGame)
-	for i, obj in ipairs(cleanup_list) do
-		if doesObjectExist(obj) then
-			deleteObject(obj)
+		for i, obj in ipairs(cleanup_list) do
+			if doesObjectExist(obj) then
+				deleteObject(obj)
+			end
 		end
 	end
 end
